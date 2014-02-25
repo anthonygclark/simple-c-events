@@ -4,21 +4,26 @@
 
 
 void myEventHandler(void* userdata){
-  printf("I got called\n");
+  printf("I got called: %s\n", (char*) userdata);
 }
+
+typedef enum EVENTSTATES {
+  EVENT_OPEN = 0,
+  EVENT_READ,
+  EVENT_CLOSE
+} EVENTSTATE_T;
 
 
 int main(int argc, char** argv){
 
   EventQueue_t* queue = createEventQueue(3, 15);
  
-  EventCallback callback = myEventHandler;
+  // Register an event to the "READ" (second phase) event stack
+  addEvent(queue, EVENT_READ, (EventCallback) myEventHandler);
 
-  addEvent(queue, 2, & callback);
-
-  triggerEvent(queue, 0, NULL);
-  triggerEvent(queue, 1, NULL);
-  triggerEvent(queue, 2, NULL);
+  triggerEvent(queue, EVENT_OPEN, "first");
+  triggerEvent(queue, EVENT_READ, "second");
+  triggerEvent(queue, EVENT_CLOSE, "third");
 
   freeEventQueue(queue);   
 

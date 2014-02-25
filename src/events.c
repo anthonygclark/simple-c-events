@@ -31,7 +31,7 @@ void freeEventQueue(EventQueue_t* queue){
 
 
 
-int addEvent(EventQueue_t* queue, unsigned int signal, EventCallback* callback){
+int addEvent(EventQueue_t* queue, unsigned int signal, EventCallback callback){
   int i;
   int base = (signal * (queue->max_handlers));
 
@@ -46,7 +46,7 @@ int addEvent(EventQueue_t* queue, unsigned int signal, EventCallback* callback){
 }
 
 
-int removeEvent(EventQueue_t* queue, unsigned int signal, EventCallback* callback){
+int removeEvent(EventQueue_t* queue, unsigned int signal, EventCallback callback){
   int i;
   int base = (signal * (queue->max_handlers));
 
