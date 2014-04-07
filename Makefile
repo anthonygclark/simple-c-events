@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -Wall -Werror -fPIC -I $(shell readlink -m src/)
+CFLAGS := -Wall -Werror -fPIC -I $(shell cd src/; pwd -P)
 CPPFLAGS := 
 RELEASE_FLAGS := -O2 -DNDEBUG
 DEBUG_FLAGS := -ggdb
@@ -63,6 +63,11 @@ lib: $(ST_NAME) $(SH_NAME)
 
 tests: $(ST_NAME)
 	@$(MAKE) --no-print-directory -C tests
+
+static-analysis:
+	@if which cppcheck > /dev/null; then \
+		echo "CPPCHECK: "; cppcheck src/; \
+	fi
 
 clean:
 	$(RM) -r $(BIN) obj $(ST_NAME) $(SH_NAME)
