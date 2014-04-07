@@ -26,7 +26,7 @@ export CPPFLAGS
 export GIT_VER
 export ST_NAME
 
-.PHONY: all clean prep lib DEBUG RELEASE
+.PHONY: all clean prep lib DEBUG RELEASE doc tests static-analysis
 .SUFFIXES:
 
 # by default build mode and tests
@@ -34,7 +34,7 @@ all: $(MODE) tests
 
 prep:
 	@echo $(NAME) $(GIT_VER) $(MODE)
-	@mkdir -p obj
+	@mkdir -p obj doc
 
 RELEASE: export MODE = RELEASE 
 RELEASE: export CFLAGS += $(RELEASE_FLAGS)
@@ -69,6 +69,11 @@ static-analysis:
 		echo "CPPCHECK: "; cppcheck src/; \
 	fi
 
+doc:
+	@if which doxygen > /dev/null; then \
+		echo "DOXYGEN: "; doxygen Doxyfile; \
+	fi
+
 clean:
-	$(RM) -r $(BIN) obj $(ST_NAME) $(SH_NAME)
+	$(RM) -r $(BIN) obj doc $(ST_NAME) $(SH_NAME)
 	@$(MAKE) --no-print-directory -C tests clean
