@@ -1,20 +1,69 @@
+CC := gcc
+CFLAGS := -Wall -Werror -fPIC -I $(shell readlink -m src/)
+CPPFLAGS := 
+RELEASE_FLAGS := -O2 -DNDEBUG
+DEBUG_FLAGS := -ggdb
 
-DEBUG ?= 0
-COMPILE_FLAGS=-Wall -stdlib=libstdc++
-DEBUG_FLAGS=-ggdb -D DEBUG=$(DEBUG)
+# OSX Specific Flags
+ifeq ("$(shell uname)", "Darwin")
+	CFLAGS += -stdlib=libstdc++
+endif
 
-.PHONY: all clean
+NAME	:= libeventqueue
+SH_NAME	:= $(NAME).so
+ST_NAME	:= $(NAME).a
 
-all: libeventqueue.o testing.exe
+SOURCES	:= $(wildcard src/*.c)
+OBJECTS	:= $(subst src/,obj/, $(SOURCES:.c=.o))
+DEPS	:= $(OBJECTS:.o=.d)
+GIT_VER	:= $(shell git describe --always)
 
+MODE	?= DEBUG
 
-testing.exe: src/test.c libeventqueue.o 
-	gcc $(COMPILE_FLAGS) $(DEBUG_FLAGS) -o $@ $^
+export CC
+export CFLAGS
+export CPPFLAGS
+export GIT_VER
+export ST_NAME
 
-libeventqueue.o: src/events.c src/events.h
-	gcc $(COMPILE_FLAGS) $(DEBUG_FLAGS) -o $@ -c $<
+.PHONY: all clean prep lib DEBUG RELEASE
+.SUFFIXES:
 
+# by default build mode and tests
+all: $(MODE) tests
 
+prep:
+	@echo $(NAME) $(GIT_VER) $(MODE)
+	@mkdir -p obj
+
+RELEASE: export MODE = RELEASE 
+RELEASE: export CFLAGS += $(RELEASE_FLAGS)
+RELEASE: prep lib
+
+DEBUG: export MODE = DEBUG
+DEBUG: export CFLAGS += $(DEBUG_FLAGS)
+DEBUG: prep lib
+
+-include $(DEPS)
+
+obj/%.o: src/%.c
+	@echo "CC	$@"
+	@$(CC) $(CFLAGS) -c -MP -MMD $< -o $@ $(CPPFLAGS)
+
+$(ST_NAME): $(OBJECTS)
+	@echo "AR	$@"
+	@ar -rcs $@ $^
+
+$(SH_NAME): $(OBJECTS)
+	@echo "SO	$@"
+	@$(CC) $(CFLAGS) -shared -o $@ $^ $(CPPFLAGS)
+
+# Build both shared and static libs
+lib: $(ST_NAME) $(SH_NAME)
+
+tests: $(ST_NAME)
+	@$(MAKE) --no-print-directory -C tests
 
 clean:
-	@rm -rvf *.exe *.o
+	$(RM) -r $(BIN) obj $(ST_NAME) $(SH_NAME)
+	@$(MAKE) --no-print-directory -C tests clean
